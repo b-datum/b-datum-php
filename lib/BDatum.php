@@ -58,8 +58,10 @@ class BDatumNode
                 $key = str_replace(str_replace(DIRECTORY_SEPARATOR, '/', $this->base_dir . DIRECTORY_SEPARATOR), '', $filename);
             }
         }else{
-            $key = str_replace('\\','/', $key);
+            $key = str_replace('\\','/', $key). '/' . basename($filename);
         }
+        $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
+
 
         $ch = curl_init();
 
@@ -118,6 +120,61 @@ class BDatumNode
     public function get_list($basedir='/'){
 
         return array();
+
+    }
+
+}
+
+
+class BDatumNodeActivation {
+    private $partner_key;
+    private $activation_key;
+
+
+    public function __construct($PARTNER_KEY, $ACTIVATION_KEY)
+    {
+        $this->partner_key = $PARTNER_KEY;
+        $this->activation_key = $ACTIVATION_KEY;
+    }
+
+    public function activate()
+    {
+        $ch = curl_init();
+
+        $url = 'https://api.b-datum.com/node/activate';
+
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_USERAGENT, "B-Datum partner");
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_PORT , 443);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+
+        curl_setopt($ch, CURLOPT_POST, true);
+
+        $post = array(
+            "partner_key" => $this->partner_key,
+            "activation_key" => $this->activation_key
+        );
+
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($ch, CURLOPT_VERBOSE, true);
+
+        if(($response = curl_exec($ch)) === false)
+        {
+            die('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
+
+        }
+        $info = curl_getinfo($ch);
+        curl_close ($ch);
+
+        $header = substr($response, 0, $info['header_size']);
+        $body = substr($response, -$info['download_content_length']);
+
+        return json_decode($body);
 
     }
 
