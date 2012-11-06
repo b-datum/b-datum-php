@@ -4,8 +4,8 @@ error_reporting(E_ALL);
 include('../lib/BDatum.php');
 
 # Troque pela suas chaves
-define("PARTNER_KEY", "hA9phG4n4hGVuEj1fIxCmQ");
-define("NODE_KEY", "uFxBI3En4hGMM0j1fIxCmQ");
+define("PARTNER_KEY", "ys9hzza605zZVKNJvdiB");
+define("NODE_KEY", "ALThcI8EWJOPHeoP01mz");
 
 $auth = new BDatumNodeAuth( NODE_KEY, PARTNER_KEY );
 
