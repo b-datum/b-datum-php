@@ -77,6 +77,35 @@ class BDatumNode {
     private $id;
     private $status;
 
+    public function __construct($nome){
+        $this->nome = $nome;
+    }
+
+
+
+    public function set_id($id){
+        $this->id = $id;
+    }
+
+    public function get_id($id){
+        return $this->id;
+    }
+
+    public function set_nome($nome){
+        $this->nome = $nome;
+    }
+
+    public function get_nome($nome){
+        return $this->nome;
+    }
+
+    public function set_status($status){
+        $this->status = $status;
+    }
+
+    public function get_status($status){
+        return $this->status;
+    }
 
 }
 
@@ -89,8 +118,11 @@ class BDatumOrganization {
     private $b_datum_api;
 
     public function add_node(BDatumNode $node){
-
+        if (is_null($b_datum_api)){
+            throw new Exception( "Você só pode adicionar pontos para uma organizacao retornada pela API ou adicionada nela.");
+        }
     }
+
 
 }
 
@@ -112,4 +144,9 @@ class ApiBDatum
 
     }
 
+
+    public function add_organization(BDatumOrganization $org){
+
+
+    }
 }

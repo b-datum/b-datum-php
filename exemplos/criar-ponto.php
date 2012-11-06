@@ -12,4 +12,5 @@ try {
     die($e->getMessage());
 }
 
-$api_auth = new BDatumNode('partner_test@b-datum.com', '12345');
+$ponto = new BDatumNode('ponto exemplo: meu computador');
+
