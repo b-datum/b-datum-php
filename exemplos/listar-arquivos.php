@@ -12,7 +12,10 @@ $auth = new BDatumNodeAuth( NODE_KEY, PARTNER_KEY );
 $storage = new BDatumNode( $auth );
 
 try {
-    $res = $storage->send('../etc/frutas.txt', 'pasta_exemplo_2');
+    $res = $storage->get_list();
+    var_dump($res);
+
+    $res = $storage->get_list('pasta_exemplo_2');
     var_dump($res);
 }catch(Exception $e){
 

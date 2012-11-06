@@ -11,10 +11,9 @@ $auth = new BDatumNodeAuth( NODE_KEY, PARTNER_KEY );
 
 $storage = new BDatumNode( $auth );
 
-try {
-    $res = $storage->send('../etc/frutas.txt', 'pasta_exemplo_2');
-    var_dump($res);
-}catch(Exception $e){
-
-    die($e->getMessage());
+$res = $storage->get_info('pasta_exemplo_2/frutas.txt');
+# 404 nao encontrado
+if ($res === false){
+    die("arquivo nao encontrado");
 }
+?>
