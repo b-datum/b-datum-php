@@ -1,5 +1,10 @@
 <?php
 
+
+if (!extension_loaded('curl')) {
+    throw new Exception("extension CURL eh necessario para usar este script");
+}
+
 class BDatumNodeAuth
 {
     private $authorization;
@@ -27,18 +32,16 @@ class BDatumNode
         $this->auth = $auth;
         $this->base_dir = NULL;
 
-        if (!extension_loaded('curl')) {
-            die("extension CURL eh necessario para usar este script");
-        }
+
     }
 
     public function set_base_path($dir, $existir=NULL){
 
         if (is_null($existir) && is_dir($base_dir)){
-            die("diretorio [$dir] nao existe. Caso realmente queria fazer isso, use set_base_path('$dir', FALSE)");
+            throw new Exception("diretorio [$dir] nao existe. Caso realmente queria fazer isso, use set_base_path('$dir', FALSE)");
         }
         if ($existir == true && is_dir($base_dir) == false){
-            die("diretorio [$dir] nao existe.");
+            throw new Exception("diretorio [$dir] nao existe.");
         }
 
         $this->base_dir = realpath($dir);
@@ -48,12 +51,12 @@ class BDatumNode
     public function send($filename, $key = NULL){
 
         if (!file_exists($filename)){
-            die("$filename não existe.");
+            throw new Exception("$filename não existe.");
         }
 
         if (is_null($key)){
             if (is_null($this->base_dir)){
-                die("Você esta tentando enviar o arquivo sem definir a chave.");
+                throw new Exception("Você esta tentando enviar o arquivo sem definir a chave.");
             }else{
                 $key = str_replace(str_replace(DIRECTORY_SEPARATOR, '/', $this->base_dir . DIRECTORY_SEPARATOR), '', $filename);
             }
@@ -82,7 +85,7 @@ class BDatumNode
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER,
             array(
-                'Authorization: Basic ' . $this->auth->get_token()
+                'Authorization: Basic ' . $this->auth->get_token() . '=='
             )
         );
 
@@ -165,7 +168,7 @@ class BDatumNodeActivation {
 
         if(($response = curl_exec($ch)) === false)
         {
-            die('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
+            throw new Exception('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
 
         }
         $info = curl_getinfo($ch);
@@ -174,7 +177,11 @@ class BDatumNodeActivation {
         $header = substr($response, 0, $info['header_size']);
         $body = substr($response, -$info['download_content_length']);
 
-        return json_decode($body);
+        $obj = json_decode($body);
+        if (!empty($obj->error)){
+            throw new Exception( $obj->error );
+        }
+        return $obj;
 
     }
 
