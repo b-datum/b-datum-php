@@ -18,6 +18,12 @@ class BDatumNodeAuth
     }
 }
 
+
+/***
+  * BDatumNode usado para enviar, receber, apagar e listar os arquivos armazenados
+  * todos os metodos podem jogar exceção, exceto o constructor
+*/
+
 class BDatumNode
 {
 
@@ -41,7 +47,11 @@ class BDatumNode
             throw new Exception("diretorio [$dir] nao existe.");
         }
 
-        $this->base_dir = realpath($dir);
+        if ($existir == true){
+            $this->base_dir = realpath($dir);
+        }else{
+            $this->base_dir = $dir;
+        }
 
     }
 
@@ -334,9 +344,9 @@ class BDatumNode
 
         $root = preg_replace('/\/+/', '/', $root); # tira / duplicados
         if ($root !== '/'){
-            $root = preg_replace('/^\//', '', $root); # tira do comeco
-            $root = preg_replace('/\/$/', '', $root); # tira do final
-            $url .= '?path=' . $root;
+            $root = preg_replace('/^\/+/', '', $root); # tira do comeco
+            $root = preg_replace('/\/+$/', '', $root); # tira do final
+            $url .= '?path=' . $root . '/'; # mas poe de novo
         }
 
         curl_setopt($ch, CURLOPT_HEADER, 1);
