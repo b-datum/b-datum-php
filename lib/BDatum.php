@@ -93,7 +93,7 @@ class BDatumNode
         $return = array();
         if(($response = curl_exec($ch)) === false)
         {
-            echo 'Curl error: ' . curl_error($ch) . ' '. curl_errno($ch) ;
+            echo 'Curl error: ' . curl_error($ch) . ' '. curl_errno($ch);
         }
         else
         {
