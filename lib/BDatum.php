@@ -103,7 +103,7 @@ class BDatumNode
         $return = array();
         if(($response = curl_exec($ch)) === false)
         {
-            echo 'Curl error: ' . curl_error($ch) . ' '. curl_errno($ch);
+            throw new Exception('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
         }
         else
         {
@@ -177,7 +177,7 @@ class BDatumNode
         $return = array();
         if(($response = curl_exec($ch)) === false)
         {
-            echo 'Curl error: ' . curl_error($ch) . ' '. curl_errno($ch) ;
+            throw new Exception('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
         }
         else
         {
@@ -238,7 +238,7 @@ class BDatumNode
         $return = array();
         if(($response = curl_exec($ch)) === false)
         {
-            echo 'Curl error: ' . curl_error($ch) . ' '. curl_errno($ch) ;
+            throw new Exception('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
         }
         else
         {
@@ -256,7 +256,7 @@ class BDatumNode
                     'content_type' => $headers['Content-Type'],
                     'size' => $headers['Content-Length'],
                     'etag' => $headers['ETag'],
-
+                    'version' => $headers['X-Meta-B-Datum-Version'],
                     'headers' => $headers
                 );
 
@@ -301,7 +301,7 @@ class BDatumNode
         $return = array();
         if(($response = curl_exec($ch)) === false)
         {
-            echo 'Curl error: ' . curl_error($ch) . ' '. curl_errno($ch) ;
+            throw new Exception('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
         }
         else
         {
@@ -310,7 +310,7 @@ class BDatumNode
             $header = substr($response, 0, $info['header_size']);
 
             $headers = $this->get_headers($header);
-
+var_dump($headers);exit;
             if ($info['http_code'] == 404){
                 return false;
             }elseif ($info['http_code'] == 410){
