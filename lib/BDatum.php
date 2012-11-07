@@ -256,7 +256,7 @@ class BDatumNode
                     'content_type' => $headers['Content-Type'],
                     'size' => $headers['Content-Length'],
                     'etag' => $headers['ETag'],
-
+                    'version' => $headers['X-Meta-B-Datum-Version'],
                     'headers' => $headers
                 );
 
