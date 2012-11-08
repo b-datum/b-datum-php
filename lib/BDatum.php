@@ -99,7 +99,7 @@ class BDatumNode
         curl_setopt($ch, CURLOPT_HTTPHEADER,
             array(
                 'Authorization: Basic ' . $this->auth->get_token() . '==',
-                'x-md5: ' . $md5
+                'etag: ' . $md5
             )
         );
 
