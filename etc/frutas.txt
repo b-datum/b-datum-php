@@ -3,5 +3,4 @@ banana
 caju
 caqui
 coco verde
-xxxx
 abacate

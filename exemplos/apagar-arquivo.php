@@ -15,7 +15,7 @@ try {
     $res = $storage->send('../etc/frutas.txt', 'dir_para_apagar');
 
     $del = $storage->delete('dir_para_apagar/frutas.txt');
-    var_dump($del);
+    print_r($del);
 
 
 }catch(Exception $e){

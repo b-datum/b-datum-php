@@ -72,6 +72,14 @@ class BDatumNode
         }
         $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
 
+        $md5 = md5_file($filename);
+
+        if (filesize($filename) > 200){
+            $info = $this->get_info($key);
+            if ($info && $info['etag'] == $md5 ){
+                return $info;
+            }
+        }
 
         $ch = curl_init();
 
@@ -90,7 +98,8 @@ class BDatumNode
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER,
             array(
-                'Authorization: Basic ' . $this->auth->get_token() . '=='
+                'Authorization: Basic ' . $this->auth->get_token() . '==',
+                'x-md5: ' . $md5
             )
         );
 
@@ -114,7 +123,7 @@ class BDatumNode
 
             $headers = $this->get_headers($header);
 
-            if ($info['http_code'] == 200){
+            if ($info['http_code'] == 200 || $info['http_code'] == 204){
                 $return = array(
                     'url' => $info['url'],
                     'version' => $headers['X-Meta-B-Datum-Version'],
@@ -123,7 +132,7 @@ class BDatumNode
                     'headers' => $headers
                 );
             }else{
-                throw new Exception("http_status nao reconhecido: " . $header );
+                throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
             }
         }
         curl_close ($ch);
@@ -200,7 +209,7 @@ class BDatumNode
                     'headers' => $headers
                 );
             }else{
-                throw new Exception("http_status nao reconhecido: " . $header );
+                throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
             }
         }
         curl_close ($ch);
@@ -266,7 +275,7 @@ class BDatumNode
                     file_put_contents($filename, substr($response, -$info['download_content_length']));
                 }
             }else{
-                throw new Exception("http_status nao reconhecido: " . $header );
+                throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
             }
         }
         curl_close ($ch);
@@ -310,10 +319,10 @@ class BDatumNode
             $header = substr($response, 0, $info['header_size']);
 
             $headers = $this->get_headers($header);
-var_dump($headers);exit;
+
             if ($info['http_code'] == 404){
                 return false;
-            }elseif ($info['http_code'] == 410){
+            }elseif ($info['http_code'] == 200){ # teoricamente é 410..
                 $return = array(
                     'name' => $headers['Content-Disposition'],
                     'content_type' => $headers['Content-Type'],
@@ -329,7 +338,7 @@ var_dump($headers);exit;
                     file_put_contents($filename, substr($response, -$info['download_content_length']));
                 }
             }else{
-                throw new Exception("http_status nao reconhecido: " . $header );
+                throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
             }
         }
         curl_close ($ch);
@@ -386,7 +395,7 @@ var_dump($headers);exit;
                 $return = json_decode($body);
 
             }else{
-                throw new Exception("http_status nao reconhecido: " . $header );
+                throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
             }
         }
         curl_close ($ch);
