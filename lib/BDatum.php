@@ -72,6 +72,14 @@ class BDatumNode
         }
         $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
 
+        $md5 = md5_file($filename);
+
+        if (filesize($filename) > 200){
+            $info = $this->get_info($key);
+            if ($info && $info['etag'] == $md5 ){
+                return $info;
+            }
+        }
 
         $ch = curl_init();
 
@@ -90,7 +98,8 @@ class BDatumNode
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER,
             array(
-                'Authorization: Basic ' . $this->auth->get_token() . '=='
+                'Authorization: Basic ' . $this->auth->get_token() . '==',
+                'x-md5: ' . $md5
             )
         );
 
