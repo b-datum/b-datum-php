@@ -81,7 +81,7 @@ class BDatumNode
             }
         }
 
-        $url = 'https://api.b-datum.com/storage?path=' . $key;
+        $url = 'https://api.b-datum.com/storage?path=/' . $key;
 
         $ch = $this->get_curl_obj($url, 'GET');
 
@@ -105,13 +105,11 @@ class BDatumNode
 
             $headers = $this->get_headers($header);
 
-            if ($info['http_code'] == 200 || $info['http_code'] == 204){
+            if ($info['http_code'] == 201 || $info['http_code'] == 204){
                 $return = array(
                     'url' => $info['url'],
                     'version' => $headers['X-Meta-B-Datum-Version'],
-                    'content_type' => $headers['Content-Type'],
                     'etag' => $headers['ETag'],
-                    'headers' => $headers
                 );
             }else{
                 throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
@@ -140,13 +138,18 @@ class BDatumNode
         return $headers;
     }
 
-    public function get_info($key){
+    public function get_info($key, $version = -1){
         $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
 
-        $url = 'https://api.b-datum.com/storage/' . $key;
+        $root = preg_replace('/^\/+/', '', $root); # tira do comeco
+        $root = preg_replace('/\/+$/', '', $root); # tira do final
+
+        $url = 'https://api.b-datum.com/storage?path=' . $key;
+        if ($version != -1 && is_numeric($version)){
+            $url .= '&version='.$version;
+        }
 
         $ch = $this->get_curl_obj($url, 'HEAD');
-
 
         $return = array();
         if(($response = curl_exec($ch)) === false)
@@ -158,7 +161,6 @@ class BDatumNode
             $info = curl_getinfo($ch);
 
             $header = substr($response, 0, $info['header_size']);
-            $body = substr($response, -$info['download_content_length']);
 
             $headers = $this->get_headers($header);
 
@@ -166,12 +168,12 @@ class BDatumNode
                 return false;
             }elseif ($info['http_code'] == 200){
                 $return = array(
-                    'name' => $headers['Content-Disposition'],
-                    'content_type' => $headers['Content-Type'],
-                    'size' => $headers['Content-Length'],
-                    'etag' => $headers['ETag'],
-
-                    'headers' => $headers
+                    'name'         => @$headers['Content-Disposition'],
+                    'content_type' => @$headers['Content-Type'],
+                    'size'         => @$headers['Content-Length'],
+                    'etag'         => @$headers['ETag'],
+                    'version'      => @$headers['X-Meta-B-Datum-Version'],
+                    'deleted'      => @$headers['X-B-Datum-Delete'],
                 );
             }else{
                 throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
@@ -215,7 +217,6 @@ class BDatumNode
                     'size' => $headers['Content-Length'],
                     'etag' => $headers['ETag'],
                     'version' => $headers['X-Meta-B-Datum-Version'],
-                    'headers' => $headers
                 );
 
                 if (is_null($filename)){
@@ -268,7 +269,7 @@ class BDatumNode
 
         $url = 'https://api.b-datum.com/storage?path=/' . $key;
 
-        $ch = $this->get_curl_obj($url, 'HEAD');
+        $ch = $this->get_curl_obj($url, 'DELETE');
 
         $return = array();
         if(($response = curl_exec($ch)) === false)
@@ -285,21 +286,10 @@ class BDatumNode
 
             if ($info['http_code'] == 404){
                 return false;
-            }elseif ($info['http_code'] == 200){ # teoricamente é 410..
+            }elseif ($info['http_code'] == 410 || $info['http_code'] == 204 ){
                 $return = array(
-                    'name' => $headers['Content-Disposition'],
-                    'content_type' => $headers['Content-Type'],
-                    'size' => $headers['Content-Length'],
-                    'etag' => $headers['ETag'],
-
-                    'headers' => $headers
+                    'deleted' => '1'
                 );
-
-                if (is_null($filename)){
-                    $return['content'] = substr($response, -$info['download_content_length']);
-                }else{
-                    file_put_contents($filename, substr($response, -$info['download_content_length']));
-                }
             }else{
                 throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
             }
@@ -310,7 +300,6 @@ class BDatumNode
 
     public function get_list($root='/'){
 
-        $ch = curl_init();
 
         $url = 'https://api.b-datum.com/storage';
 
@@ -321,21 +310,9 @@ class BDatumNode
             $url .= '?path=/' . $root . '/'; # mas poe de novo
         }
 
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-        curl_setopt($ch, CURLOPT_VERBOSE, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, "B-Datum partner");
 
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_PORT , 443);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        $ch = $this->get_curl_obj($url, 'GET');
 
-        curl_setopt($ch, CURLOPT_HTTPHEADER,
-            array(
-                'Authorization: Basic ' . $this->auth->get_token() . '=='
-            )
-        );
         $return = array();
         if(($response = curl_exec($ch)) === false)
         {
@@ -350,8 +327,6 @@ class BDatumNode
 
             $headers = $this->get_headers($header);
 
-            var_dump($headers);
-            var_dump($body);
             if ($info['http_code'] == 404){
                 return false;
             }elseif ($info['http_code'] == 200){

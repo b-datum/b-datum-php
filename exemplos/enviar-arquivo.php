@@ -1,5 +1,6 @@
 <?php
 error_reporting(E_ALL);
+header('Content-type: text/plain');
 
 include('../lib/BDatum.php');
 

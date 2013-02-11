@@ -1,5 +1,6 @@
 <?php
 error_reporting(E_ALL);
+header('Content-type: text/plain');
 
 include('../lib/BDatum.php');
 
@@ -11,10 +12,10 @@ $storage = new BDatumNode( $auth );
 
 try {
     $res = $storage->get_list();
-    var_dump($res);
+    print "\nList /  " . json_encode($res, JSON_PRETTY_PRINT);
 
     $res = $storage->get_list('pasta_exemplo_2');
-    var_dump($res);
+    print "\nList /pasta_exemplo_2  " . json_encode($res, JSON_PRETTY_PRINT);
 }catch(Exception $e){
 
     die($e->getMessage());
