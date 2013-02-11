@@ -81,27 +81,9 @@ class BDatumNode
             }
         }
 
-        $ch = curl_init();
+        $url = 'https://api.b-datum.com/storage?path=' . $key;
 
-        $url = 'https://api.b-datum.com/storage/' . $key;
-
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-        curl_setopt($ch, CURLOPT_VERBOSE, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, "B-Datum partner");
-
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_PORT , 443);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER,
-            array(
-                'Authorization: Basic ' . $this->auth->get_token() . '==',
-                'etag: ' . $md5
-            )
-        );
+        $ch = $this->get_curl_obj($url, 'GET');
 
         $post = array(
             "value" => "@$filename",
@@ -161,26 +143,9 @@ class BDatumNode
     public function get_info($key){
         $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
 
-        $ch = curl_init();
-
         $url = 'https://api.b-datum.com/storage/' . $key;
 
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-        curl_setopt($ch, CURLOPT_VERBOSE, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, "B-Datum partner");
-
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_PORT , 443);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'HEAD');
-        curl_setopt($ch, CURLOPT_HTTPHEADER,
-            array(
-                'Authorization: Basic ' . $this->auth->get_token() . '=='
-            )
-        );
+        $ch = $this->get_curl_obj($url, 'HEAD');
 
 
         $return = array();
@@ -220,29 +185,13 @@ class BDatumNode
     public function download($key, $filename = NULL, $version = -1){
         $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
 
-        $ch = curl_init();
 
-        $url = 'https://api.b-datum.com/storage/' . $key;
+        $url = 'https://api.b-datum.com/storage?path=/' . $key;
         if ($version != -1 && is_numeric($version)){
-            $url .= '?version='.$version;
+            $url .= '&version='.$version;
         }
 
-        curl_setopt($ch, CURLOPT_HEADER, 1);
-        curl_setopt($ch, CURLOPT_VERBOSE, true);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_USERAGENT, "B-Datum partner");
-
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_PORT , 443);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-
-        curl_setopt($ch, CURLOPT_HTTPHEADER,
-            array(
-                'Authorization: Basic ' . $this->auth->get_token() . '=='
-            )
-        );
-
+        $ch = $this->get_curl_obj($url, 'GET');
 
         $return = array();
         if(($response = curl_exec($ch)) === false)
@@ -282,13 +231,10 @@ class BDatumNode
         return $return;
     }
 
-    public function delete($key){
-        $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
 
+    public function get_curl_obj($url, $method){
         $ch = curl_init();
-
-        $url = 'https://api.b-datum.com/storage/' . $key;
-
+        $method = strtoupper($method);
 
         curl_setopt($ch, CURLOPT_HEADER, 1);
         curl_setopt($ch, CURLOPT_VERBOSE, true);
@@ -300,12 +246,29 @@ class BDatumNode
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
 
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'HEAD');
+        if ($method == 'POST'){
+            curl_setopt($ch, CURLOPT_POST, true);
+        }
+
+        if ($method != 'GET'){
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        }
+
         curl_setopt($ch, CURLOPT_HTTPHEADER,
             array(
                 'Authorization: Basic ' . $this->auth->get_token() . '=='
             )
         );
+        return $ch;
+    }
+
+    public function delete($key){
+        $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
+
+
+        $url = 'https://api.b-datum.com/storage?path=/' . $key;
+
+        $ch = $this->get_curl_obj($url, 'HEAD');
 
         $return = array();
         if(($response = curl_exec($ch)) === false)
@@ -355,7 +318,7 @@ class BDatumNode
         if ($root !== '/'){
             $root = preg_replace('/^\/+/', '', $root); # tira do comeco
             $root = preg_replace('/\/+$/', '', $root); # tira do final
-            $url .= '?path=' . $root . '/'; # mas poe de novo
+            $url .= '?path=/' . $root . '/'; # mas poe de novo
         }
 
         curl_setopt($ch, CURLOPT_HEADER, 1);
