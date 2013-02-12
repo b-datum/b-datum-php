@@ -141,8 +141,8 @@ class BDatumNode
     public function get_info($key, $version = -1){
         $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
 
-        $root = preg_replace('/^\/+/', '', $root); # tira do comeco
-        $root = preg_replace('/\/+$/', '', $root); # tira do final
+        $key = preg_replace('/^\/+/', '', $key); # tira do comeco
+        $key = preg_replace('/\/+$/', '', $key); # tira do final
 
         $url = 'https://api.b-datum.com/storage?path=' . $key;
         if ($version != -1 && is_numeric($version)){
