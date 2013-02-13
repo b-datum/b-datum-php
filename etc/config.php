@@ -11,3 +11,5 @@ $obj = json_decode(file_get_contents($self_path . '/credentials.inc'));
 
 define('NODE_KEY', $obj->node_key);
 define('PARTNER_KEY', $obj->partner_key);
+
+define('CA_FILE', $self_path .'/sf_bundle.crt');

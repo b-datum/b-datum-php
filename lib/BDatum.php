@@ -36,6 +36,12 @@ class BDatumNode
         $this->auth = $auth;
         $this->base_dir = NULL;
         set_time_limit(36000); // 10 hours
+
+        if (file_exists(CA_FILE) == FALSE){
+            die("Arquivo de certificado nao foi encontrado.".
+                "Você precisa definir o valor correto usando a ".
+                "define('CA_FILE', 'caminho/para/arquivo.crt');\nvalor de CA_FILE atual = " . CA_FILE );
+        }
     }
 
     public function set_base_path($dir, $existir=NULL){
@@ -244,8 +250,8 @@ class BDatumNode
 
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_PORT , 443);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_CAINFO, CA_FILE);
 
         if ($method == 'POST'){
             curl_setopt($ch, CURLOPT_POST, true);
@@ -372,8 +378,8 @@ class BDatumNodeActivation {
 
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_PORT , 443);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_CAINFO, CA_FILE);
 
         curl_setopt($ch, CURLOPT_POST, true);
 
