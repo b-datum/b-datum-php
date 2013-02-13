@@ -89,7 +89,7 @@ class BDatumNode
 
         $url = 'https://api.b-datum.com/storage?path=/' . $key;
 
-        $ch = $this->get_curl_obj($url, 'GET');
+        $ch = $this->get_curl_obj($url, 'POST', $md5);
 
         $post = array(
             "value" => "@$filename",
@@ -239,7 +239,7 @@ class BDatumNode
     }
 
 
-    public function get_curl_obj($url, $method){
+    public function get_curl_obj($url, $method, $etag){
         $ch = curl_init();
         $method = strtoupper($method);
 
@@ -261,11 +261,14 @@ class BDatumNode
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
         }
 
-        curl_setopt($ch, CURLOPT_HTTPHEADER,
-            array(
-                'Authorization: Basic ' . $this->auth->get_token() . '=='
-            )
+        $arr = array(
+            'Authorization: Basic ' . $this->auth->get_token() . '==',
         );
+        if (is_null($etag) == false){
+            $arr[] = "ETag: $etag";
+        }
+
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $arr);
         return $ch;
     }
 
