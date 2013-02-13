@@ -96,14 +96,23 @@ class BDatumNode
         );
         curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
 
+        $response = null;
+        $try      = 3;
 
-        $return = array();
-        if(($response = curl_exec($ch)) === false)
-        {
+        while ($try > 0){
+            $response = curl_exec($ch);
+            if ($response)
+                break;
+
+            sleep(1);
+            $try--;
+        }
+        if ($response == false && $try == 0){
             throw new Exception('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
         }
-        else
-        {
+
+        $return = array();
+        if ($response){
             $info = curl_getinfo($ch);
 
             $header = substr($response, 0, $info['header_size']);
