@@ -248,7 +248,7 @@ class BDatumNode
     }
 
 
-    public function get_curl_obj($url, $method, $etag){
+    public function get_curl_obj($url, $method, $etag=''){
         $ch = curl_init();
         $method = strtoupper($method);
 
