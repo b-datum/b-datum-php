@@ -188,7 +188,7 @@ class BDatumNode
                     'size'         => @$headers['Content-Length'],
                     'etag'         => @$headers['ETag'],
                     'version'      => @$headers['X-Meta-B-Datum-Version'],
-                    'deleted'      => @$headers['X-B-Datum-Delete'],
+                    'deleted'      => @$headers['X-Meta-B-Datum-Delete'],
                 );
             }else{
                 throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
