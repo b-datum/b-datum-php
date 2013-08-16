@@ -108,6 +108,9 @@ class BDatumNode
         if (!file_exists($filename)){
             throw new Exception("$filename não existe.");
         }
+        if (filesize($filename) > 104857600){
+            throw new Exception("Upload maximo de 100mb");
+        }
 
         if (is_null($key)){
             if (is_null($this->base_dir)){
