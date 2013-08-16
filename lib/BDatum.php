@@ -61,7 +61,49 @@ class BDatumNode
 
     }
 
-    public function send($filename, $key = NULL){
+
+
+
+    public function allowed_metadata(){
+        $url = 'https://api.b-datum.com/storage/allowed_metadata';
+
+        $ch = $this->get_curl_obj($url, 'GET');
+
+        $return = array();
+        if(($response = curl_exec($ch)) === false)
+        {
+            throw new Exception('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
+        }
+        else
+        {
+            $info = curl_getinfo($ch);
+
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header     = substr($response, 0, $headerSize);
+            $body       = substr($response, $headerSize);
+
+            $headers = $this->get_headers($header);
+            die(print_r($body, true));
+
+            if ($info['http_code'] == 404){
+                return false;
+            }elseif ($info['http_code'] == 200){
+                $return = array(
+                    'name' => $headers['Content-Disposition'],
+                    'content_type' => $headers['Content-Type'],
+                    'size' => $headers['Content-Length'],
+                );
+
+            }else{
+                throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
+            }
+        }
+        curl_close ($ch);
+        return $return;
+    }
+
+
+    public function send($filename, $key = NULL, $meta=array()){
 
         if (!file_exists($filename)){
             throw new Exception("$filename não existe.");
@@ -87,8 +129,13 @@ class BDatumNode
             }
         }
 
-        $url = 'https://api.b-datum.com/storage?path=/' . $key;
+        $metad = array();
+        foreach ($meta as $k => $v ){
+            $metad["meta-$k"] = $v;
+        }
 
+        $url = 'https://api.b-datum.com/storage/?path=/' . $key . '&' . http_build_query($metad);
+//die(print_r($url, true));
         $ch = $this->get_curl_obj($url, 'POST', $md5);
 
         $post = array(
@@ -115,8 +162,9 @@ class BDatumNode
         if ($response){
             $info = curl_getinfo($ch);
 
-            $header = substr($response, 0, $info['header_size']);
-            $body = substr($response, -$info['download_content_length']);
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header     = substr($response, 0, $headerSize);
+            $body       = substr($response, $headerSize);
 
             $headers = $this->get_headers($header);
 
@@ -159,11 +207,10 @@ class BDatumNode
         $key = preg_replace('/^\/+/', '', $key); # tira do comeco
         $key = preg_replace('/\/+$/', '', $key); # tira do final
 
-        $url = 'https://api.b-datum.com/storage?path=' . $key;
+        $url = 'https://api.b-datum.com/storage?path=/' . $key;
         if ($version != -1 && is_numeric($version)){
             $url .= '&version='.$version;
         }
-
         $ch = $this->get_curl_obj($url, 'HEAD');
 
         $return = array();
@@ -175,20 +222,30 @@ class BDatumNode
         {
             $info = curl_getinfo($ch);
 
-            $header = substr($response, 0, $info['header_size']);
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header     = substr($response, 0, $headerSize);
+            $body       = substr($response, $headerSize);
 
             $headers = $this->get_headers($header);
 
             if ($info['http_code'] == 404){
                 return false;
             }elseif ($info['http_code'] == 200){
+                $metas = array();
+                foreach ($headers as $k => $v){
+                    if (substr($k, 0, 20 ) == "X-Meta-B-Datum-Field"){
+                        $metas[strtolower(substr($k, 21 ))] = $v;
+                    }
+                }
+
                 $return = array(
                     'name'         => @$headers['Content-Disposition'],
                     'content_type' => @$headers['Content-Type'],
-                    'size'         => @$headers['Content-Length'],
+                    'size'         => @$headers['X-Meta-B-Datum-Size'],
                     'etag'         => @$headers['ETag'],
                     'version'      => @$headers['X-Meta-B-Datum-Version'],
                     'deleted'      => @$headers['X-Meta-B-Datum-Delete'],
+                    'meta'=> $metas
                 );
             }else{
                 throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
@@ -219,25 +276,28 @@ class BDatumNode
         {
             $info = curl_getinfo($ch);
 
-            $header = substr($response, 0, $info['header_size']);
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header     = substr($response, 0, $headerSize);
+            $body       = substr($response, $headerSize);
 
             $headers = $this->get_headers($header);
 
             if ($info['http_code'] == 404){
                 return false;
             }elseif ($info['http_code'] == 200){
+            #die(print_r($headers, true));
                 $return = array(
                     'name' => $headers['Content-Disposition'],
                     'content_type' => $headers['Content-Type'],
                     'size' => $headers['Content-Length'],
-                    'etag' => $headers['ETag'],
-                    'version' => $headers['X-Meta-B-Datum-Version'],
+            //        'etag' => $headers['ETag'],
+              //      'version' => $headers['X-Meta-B-Datum-Version'],
                 );
 
                 if (is_null($filename)){
-                    $return['content'] = substr($response, -$info['download_content_length']);
+                    $return['content'] = $body;
                 }else{
-                    file_put_contents($filename, substr($response, -$info['download_content_length']));
+                    file_put_contents($filename, $body);
                 }
             }else{
                 throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
@@ -264,6 +324,10 @@ class BDatumNode
 
         if ($method == 'POST'){
             curl_setopt($ch, CURLOPT_POST, true);
+        }
+
+        if ($method == 'HEAD'){
+        curl_setopt($ch, CURLOPT_NOBODY, true);
         }
 
         if ($method != 'GET'){
@@ -298,7 +362,9 @@ class BDatumNode
         {
             $info = curl_getinfo($ch);
 
-            $header = substr($response, 0, $info['header_size']);
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header     = substr($response, 0, $headerSize);
+            $body       = substr($response, $headerSize);
 
             $headers = $this->get_headers($header);
 
@@ -330,7 +396,6 @@ class BDatumNode
 
 
         $ch = $this->get_curl_obj($url, 'GET');
-
         $return = array();
         if(($response = curl_exec($ch)) === false)
         {
@@ -340,8 +405,9 @@ class BDatumNode
         {
             $info = curl_getinfo($ch);
 
-            $header = substr($response, 0, $info['header_size']);
-            $body   = substr($response, -$info['download_content_length']);
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header     = substr($response, 0, $headerSize);
+            $body       = substr($response, $headerSize);
 
             $headers = $this->get_headers($header);
 
@@ -410,8 +476,9 @@ class BDatumNodeActivation {
         $info = curl_getinfo($ch);
         curl_close ($ch);
 
-        $header = substr($response, 0, $info['header_size']);
-        $body = substr($response, -$info['download_content_length']);
+        $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $header     = substr($response, 0, $headerSize);
+        $body       = substr($response, $headerSize);
 
         $obj = @json_decode($body);
         if (!empty($obj->error)){

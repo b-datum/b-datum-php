@@ -2,9 +2,7 @@
 error_reporting(E_ALL);
 header('Content-type: text/plain');
 
-include('../lib/BDatum.php');
-
-include('../etc/config.php');
+include('enviar-arquivo.php');
 
 $auth = new BDatumNodeAuth( NODE_KEY, PARTNER_KEY );
 
