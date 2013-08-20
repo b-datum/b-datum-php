@@ -83,16 +83,11 @@ class BDatumNode
             $body       = substr($response, $headerSize);
 
             $headers = $this->get_headers($header);
-            die(print_r($body, true));
 
             if ($info['http_code'] == 404){
                 return false;
             }elseif ($info['http_code'] == 200){
-                $return = array(
-                    'name' => $headers['Content-Disposition'],
-                    'content_type' => $headers['Content-Type'],
-                    'size' => $headers['Content-Length'],
-                );
+                $return = json_decode($body);
 
             }else{
                 throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
@@ -102,6 +97,45 @@ class BDatumNode
         return $return;
     }
 
+
+    public function search_by_metadata($meta=array()){
+        $url = 'https://api.b-datum.com/storage/search?';
+
+        $metad = array();
+        foreach ($meta as $k => $v ){
+            $metad["meta-$k"] = $v;
+        }
+
+        $url .= http_build_query($metad);
+
+        $ch = $this->get_curl_obj($url, 'GET');
+
+        $return = array();
+        if(($response = curl_exec($ch)) === false)
+        {
+            throw new Exception('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
+        }
+        else
+        {
+            $info = curl_getinfo($ch);
+
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header     = substr($response, 0, $headerSize);
+            $body       = substr($response, $headerSize);
+
+            $headers = $this->get_headers($header);
+            if ($info['http_code'] == 404){
+                return false;
+            }elseif ($info['http_code'] == 200){
+                $return = json_decode($body);
+
+            }else{
+                throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
+            }
+        }
+        curl_close ($ch);
+        return $return;
+    }
 
     public function send($filename, $key = NULL, $meta=array()){
 
@@ -171,11 +205,11 @@ class BDatumNode
 
             $headers = $this->get_headers($header);
 
-            if ($info['http_code'] == 201 || $info['http_code'] == 204){
+            if ($info['http_code'] == 201 || $info['http_code'] == 202 || $info['http_code'] == 204){
                 $return = array(
                     'url' => $info['url'],
-                    'version' => $headers['X-Meta-B-Datum-Version'],
-                    'etag' => $headers['ETag'],
+                    'version' => @$headers['X-Meta-B-Datum-Version'],
+                    'etag' => @$headers['ETag'],
                 );
             }else{
                 throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );

@@ -1,4 +1,6 @@
 <?php
+die( "does not exists anymore...");
+exit;
 error_reporting(E_ALL);
 header('Content-type: text/plain');
 

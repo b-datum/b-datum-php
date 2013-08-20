@@ -11,9 +11,11 @@ $auth = new BDatumNodeAuth( NODE_KEY, PARTNER_KEY );
 $storage = new BDatumNode( $auth );
 
 try {
+    print "listing root folder..\n";
     $res = $storage->get_list();
     print "\nList /  " . json_encode($res, JSON_PRETTY_PRINT);
 
+    print "listing a folder..\n";
     $res = $storage->get_list('pasta_exemplo_2');
     print "\nList /pasta_exemplo_2  " . json_encode($res, JSON_PRETTY_PRINT);
 }catch(Exception $e){

@@ -16,8 +16,7 @@ try{
     if ($res === false){
         die("pagina nao encontrado");
     }
-    die(print_r($res, true));
-
+    print "\nallowed = " . json_encode($res, JSON_PRETTY_PRINT);
 
 }catch(Exception $e){
 
