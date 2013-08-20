@@ -220,6 +220,58 @@ class BDatumNode
         return $return;
     }
 
+    public function set_meta($key = NULL, $meta=array() ){
+
+
+        $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
+
+        $metad = array();
+        foreach ($meta as $k => $v ){
+            $metad["meta-$k"] = $v;
+        }
+
+        $url = 'https://api.b-datum.com/storage/?path=/' . $key . '&' . http_build_query($metad);
+
+        $ch = $this->get_curl_obj($url, 'PATCH');
+
+        $response = null;
+        $try      = 3;
+
+        while ($try > 0){
+            $response = curl_exec($ch);
+            if ($response)
+                break;
+
+            sleep(1);
+            $try--;
+        }
+        if ($response == false && $try == 0){
+            throw new Exception('Curl error: ' . curl_error($ch) . ' '. curl_errno($ch));
+        }
+
+        $return = array();
+        if ($response){
+            $info = curl_getinfo($ch);
+
+            $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+            $header     = substr($response, 0, $headerSize);
+            $body       = substr($response, $headerSize);
+
+            $headers = $this->get_headers($header);
+
+            if ($info['http_code'] == 201 || $info['http_code'] == 204){
+                $return = array(
+                    'version' => @$headers['X-Meta-B-Datum-Version']
+                );
+            }else{
+                throw new Exception("http_status " . $info['http_code'] . " nao reconhecido: " . print_r($headers, true) );
+            }
+        }
+        curl_close ($ch);
+
+        return $return;
+    }
+
     function get_headers($header)
     {
         $headers = array();
