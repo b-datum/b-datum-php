@@ -13,7 +13,7 @@ $storage = new BDatumNode( $auth );
 try {
     print "sending file...\n";
     $res = $storage->send('../etc/frutas.txt', 'pasta_exemplo_2', array(
-        'uid' => 1,
+        'uid' => 35,
     ) );
 
     print "\nsend file = " . json_encode($res, JSON_PRETTY_PRINT);
