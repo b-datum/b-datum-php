@@ -155,7 +155,7 @@ class BDatumNode
         }else{
             $key = str_replace('\\','/', $key). '/' . basename($filename);
         }
-        $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
+        $key = $this->_normalize_key($key);
 
         $md5 = md5_file($filename);
 
@@ -223,7 +223,7 @@ class BDatumNode
     public function set_meta($key = NULL, $meta=array() ){
 
 
-        $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
+        $key = $this->_normalize_key($key);
 
         $metad = array();
         foreach ($meta as $k => $v ){
@@ -291,10 +291,7 @@ class BDatumNode
     }
 
     public function get_info($key, $version = -1){
-        $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
-
-        $key = preg_replace('/^\/+/', '', $key); # tira do comeco
-        $key = preg_replace('/\/+$/', '', $key); # tira do final
+        $key = $this->_normalize_key($key);
 
         $url = 'https://api.b-datum.com/storage?path=/' . $key;
         if ($version != -1 && is_numeric($version)){
@@ -345,9 +342,16 @@ class BDatumNode
     }
 
 
-    public function download($key, $filename = NULL, $version = -1){
+    private function _normalize_key($key){
         $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
 
+        $key = preg_replace('/^\/+/', '', $key); # tira do comeco
+        $key = preg_replace('/\/+$/', '', $key); # tira do final
+        return $key;
+    }
+
+    public function download($key, $filename = NULL, $version = -1){
+        $key = $this->_normalize_key($key);
 
         $url = 'https://api.b-datum.com/storage?path=/' . $key;
         if ($version != -1 && is_numeric($version)){
@@ -435,9 +439,7 @@ class BDatumNode
     }
 
     public function delete($key){
-        $key = preg_replace('/\/+/', '/', $key); # tira / duplicados
-
-
+        $key = $this->_normalize_key($key);
         $url = 'https://api.b-datum.com/storage?path=/' . $key;
 
         $ch = $this->get_curl_obj($url, 'DELETE');
@@ -472,17 +474,12 @@ class BDatumNode
     }
 
     public function get_list($root='/'){
-
-
         $url = 'https://api.b-datum.com/storage';
 
-        $root = preg_replace('/\/+/', '/', $root); # tira / duplicados
-        if ($root !== '/'){
-            $root = preg_replace('/^\/+/', '', $root); # tira do comeco
-            $root = preg_replace('/\/+$/', '', $root); # tira do final
+        $root = $this->_normalize_key($root);
+        if ($root !== ''){
             $url .= '?path=/' . $root . '/'; # mas poe de novo
         }
-
 
         $ch = $this->get_curl_obj($url, 'GET');
         $return = array();
